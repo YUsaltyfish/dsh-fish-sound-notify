@@ -1,0 +1,18 @@
+# Bundle patch layer (dsh.bundle.patch).
+#
+# 在 profile 的配置树里插入一行：行的 name 是本包名，由 Node 模块解析找到
+# 包入口 index.js；index.js 导出的 apply(ctx, config) 就是这一行的 host 半体。
+#
+# 可调参数写在 config 里（未写的字段由插件的 Config schema 填默认值）：
+#   enabled / notifyOnQuestion / notifyOnTurnEnd /
+#   questionSound / endSound / cooldownMs / rootAgentsOnly
+#
+# 例：
+#   - insert:
+#       - id: fish-sound-notify
+#         name: dsh-fish-sound-notify
+#         config:
+#           endSound: 'Windows Ding.wav'
+- insert:
+    - id: fish-sound-notify
+      name: dsh-fish-sound-notify
