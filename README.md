@@ -145,4 +145,4 @@ dsh plugin --profile web remove dsh-fish-sound-notify
 ---
 
 ## 许可与作者
-MIT · 作者：玉咸鱼 (YUsaltfish)＆蓝色大肥鱼deepseek
+MIT · 作者：玉咸鱼 (YUsaltyfish)＆蓝色大肥鱼deepseek
