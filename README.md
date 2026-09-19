@@ -1,7 +1,7 @@
 # dsh-fish-sound-notify
 
 > **三个时刻各响一声** Windows 系统提示音：
-> **AI 弹出选项卡等你回答** / **有工具请求权限** / **一轮对话结束**。
+> **AI 弹出选项卡** / **请求权限** / **一轮对话结束**。
 > 按 DSH 官方组合包（bundle）规范打包；**响铃全程不弹任何控制台窗口**。
 
 ```sh
@@ -19,8 +19,8 @@ Windows only. Everything is configurable: `questionSound` / `approvalSound` / `e
 
 | 时刻 | 触发事件 | 默认音效 |
 | --- | --- | --- |
-| AI 弹出选项卡、等你回答 | `user-questions/request` | `Windows Notify.wav`（双音） |
-| **有工具请求权限、等你批准** | `approval/request` | `Windows Ding.wav`（单声"叮"，较急） |
+| AI 弹出选项卡 | `user-questions/request` | `Windows Notify.wav`（双音） |
+| **请求权限** | `approval/request` | `Windows Ding.wav`（单声"叮"，较急） |
 | 一轮对话结束 | `agent/status` 变为 `idle` | `Windows Notify System Generic.wav`（柔和单音） |
 
 三种声音**各自独立冷却**，所以"刚响过结束音，紧接着弹权限卡片"不会把权限音挤掉。
@@ -48,7 +48,7 @@ Windows only. Everything is configurable: `questionSound` / `approvalSound` / `e
 
 | 方式 | 命令 | 适用场景 |
 | --- | --- | --- |
-| **本地 tarball** | `dsh plugin --profile web add ./dsh-fish-sound-notify-0.2.0.tgz` | 别人把这个 `.tgz` 发给你 / 离线安装 |
+| **本地 tarball** | `dsh plugin --profile web add ./dsh-fish-sound-notify-0.2.0.tgz` | 离线安装 |
 | **源码目录** | `dsh plugin --profile web add ./bundle` | 手上有解压后的源码目录 |
 | **GitHub** | `dsh plugin --profile web add github:<owner>/<repo>` | 仓库已公开。本包是纯 JS、**无构建步骤**，不需要 `allowBuilds` 构建授权 |
 | **npm** | `dsh plugin --profile web add dsh-fish-sound-notify` | 作者发布到 npm 之后可用 |
@@ -111,40 +111,6 @@ dsh web
 
 ---
 
-## 为什么不会闪黑窗口了（0.2.0 的关键修复）
-
-**旧版（0.1.x）**：官方 `subprocess` 服务在 Windows 上会先启动一个 **Node "runner" 进程**来做进程树
-容器（Job 对象），而它 spawn 这个 runner 时**漏传了 `windowsHide: true`**：
-
-```js
-// @deepseek-ai/dsh-subprocess-local/lib/index.js · launchWindowsJob()
-child = (internals.spawn ?? spawn)(command, [...prefix, '--', ...spec.argv], {
-  cwd: process.cwd(),
-  env: runnerEnvironment(...),
-  stdio: runnerStdio(spec, true, ignoredStdinFd ?? 'pipe'),
-  // ← 这里缺了 windowsHide: true（同文件其它两处 spawn/taskkill 都传了）
-})
-```
-
-于是每次响铃前，都会先闪出一个 **node.exe 控制台窗口**。Node 的 `windowsHide` 默认是 `false`，
-所以这不是本插件能通过参数绕过的 —— 只要走那条服务就会闪。
-
-**0.2.0 起**：本插件自己 `spawn`，显式传 `windowsHide: true`（并附带 `-WindowStyle Hidden`）。
-实测证据（让子进程自己报告 `GetConsoleWindow()`）：
-
-| spawn 参数 | 子进程自报 |
-| --- | --- |
-| `windowsHide: false`（旧路径） | `consoleHandle=2230996`，`isVisible=True` ← 黑窗口 |
-| **`windowsHide: true`（现在）** | **`consoleHandle=0`，`isVisible=False`** ← 完全不创建窗口 |
-
-副作用（都是好事）：不再依赖 `subprocess` 服务、少一层进程（不再有 runner），
-起播更快；插件卸载时会把还在播放的子进程一并收掉。
-
-> 📌 这是官方 `dsh-subprocess-local` 的一个小缺陷，值得回报上游：给 `launchWindowsJob`
-> 的那次 `spawn` 补上 `windowsHide: true` 即可让所有走该服务的插件都受益。
-
----
-
 ## 升级 / 卸载
 
 ```sh
@@ -155,15 +121,10 @@ dsh plugin --profile web add ./dsh-fish-sound-notify-0.2.0.tgz
 dsh plugin --profile web remove dsh-fish-sound-notify
 ```
 
-> 0.1.x → 0.2.0 的升级同时修掉了黑窗口问题，**必须重启**才生效。
-
----
 
 ## 排查（Troubleshooting）
 
 | 现象 | 原因 / 处理 |
-| --- | --- |
-| **响铃前仍闪黑窗口** | 装的是 **0.1.x 旧版**。升级到 0.2.0 并重启 DSH 即可（0.2.0 不再走会闪窗口的那条服务） |
 | 一声都不响 | 先让 AI 调 `fish_beep` 看 `ok`；若 `ok: true` 但没听到，检查**系统音量**与**声音方案**（Windows 设为「无声」时会静音）、是否远程桌面/无音频设备 |
 | `fish_beep` 返回 `ok: false` | 把返回里的 `detail` 原文贴给 AI —— 它写明了失败在哪一步（找不到 PowerShell / 启动失败 / 退出码非 0 / 当前平台不是 Windows） |
 | 弹选项卡或请求权限时不响 | 若是**子 agent** 发起，按设计不响（`rootAgentsOnly: true`）；或距上一次同种声音不到 `cooldownMs` |
@@ -172,33 +133,6 @@ dsh plugin --profile web remove dsh-fish-sound-notify
 
 ---
 
-## 兼容性与维护（peer 版本范围）
-
-`package.json` 里同一个宿主要求写了两种形式，**不是笔误** —— 读它的两个消费者用的 semver 语义不同：
-
-| 字段 | 谁读它 | semver 语义 | 因此写成 |
-| --- | --- | --- | --- |
-| `engines.dsh` | 插件市场展示兼容性 | `includePrerelease: true` | 简单的 `>=0.1.0-rc.1` 就够，且对未来版本友好 |
-| `peerDependencies` | npm / pnpm 安装时校验 | **默认语义** | 必须把 `0.1.x` 每个 tuple 显式列出预发布分支 |
-
-原因：**默认语义下，带预发布标签的版本只有在"范围里存在与它 `major.minor.patch` 完全相同、
-且自身带预发布标签的比较符"时才会被放行**。所以 `>=0.1.0-rc.1` 匹配不到 `0.1.5-rc.2`，
-使用者会看到 `unmet peer dependency`（npm 下甚至直接 `ERESOLVE`）。
-
-实测覆盖（真 node-semver，默认语义）：`0.1.0-rc.6` ~ `0.1.6-rc.1` ✅、`0.2.0` / `1.0.0` ✅；
-`0.1.7-rc.1`（未来）需要补分支。**维护规则**：harness 升到新的 `0.1.x` tuple 时，
-给 `peerDependencies["@deepseek-ai/dsh-tools"]` 追加一个分支，例如
-`|| >=0.1.7-alpha.1 <0.2.0-0`。
-
----
-
-## 提交到插件市场
-
-按 `PUBLISHING.md` 的清单走：核心是往
-[awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)
-提一个 `data/plugins/<owner>__<repo>.yml` 条目文件（模板见 `submission-entry.yml`，分类 `notify`）。
-
----
 
 ## 已知限制
 
@@ -211,5 +145,4 @@ dsh plugin --profile web remove dsh-fish-sound-notify
 ---
 
 ## 许可与作者
-
-MIT · 作者：蓝色大肥鱼 (BlueFatFish)（可在 `package.json` 的 `author` 字段改成你的名字）
+MIT · 作者：玉咸鱼 (YUsaltfish)＆蓝色大肥鱼deepseek
