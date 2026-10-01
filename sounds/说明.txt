@@ -1,0 +1,22 @@
+三个时刻默认使用 Windows 自带音效（不占体积、不用任何配置）：
+
+  question.wav  →  Windows Notify Messaging      （AI 弹出选项卡、等你回答）
+  approval.wav  →  Windows Ding                  （有工具请求你批准）
+  end.wav       →  Windows Notify System Generic （一轮对话结束）
+
+--------------------------------------------------------------------
+
+【想换成自己喜欢的音频？】把文件放进本文件夹，并改成下面的名字即可 ——
+插件会优先播放你的，不需要改任何配置：
+
+  question.wav   弹选项卡时响
+  approval.wav   请求权限时响
+  end.wav        一轮结束时响
+
+想用别的格式也行：删掉 question.wav、放一个 question.mp3 进来，插件会自动找到它。
+（支持 .wav / .mp3 / .m4a / .wma / .aac / .flac；.wav 最稳）
+
+注意：本文件夹属于"插件本体"，升级或重装插件时会被覆盖。
+      想长期稳定用自己的音效，请改用配置项 soundDirectory（见插件 README）。
+
+查找顺序：你配置的 soundDirectory → 本文件夹 → C:\Windows\Media

@@ -4,15 +4,15 @@
 # 包入口 index.js；index.js 导出的 apply(ctx, config) 就是这一行的 host 半体。
 #
 # 可调参数写在 config 里（未写的字段由插件的 Config schema 填默认值）：
-#   enabled / notifyOnQuestion / notifyOnTurnEnd /
-#   questionSound / endSound / cooldownMs / rootAgentsOnly
+#   enabled / notifyOnQuestion / notifyOnApproval / notifyOnTurnEnd /
+#   questionSound / approvalSound / endSound / soundDirectory / cooldownMs / rootAgentsOnly
 #
 # 例：
 #   - insert:
-#       - id: fish-sound-notify
-#         name: dsh-fish-sound-notify
+#       - id: notification-sound
+#         name: dsh-notification-sound
 #         config:
 #           endSound: 'Windows Ding.wav'
 - insert:
-    - id: fish-sound-notify
-      name: dsh-fish-sound-notify
+    - id: notification-sound
+      name: dsh-notification-sound
